@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'app/**'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ci-ok:
+    name: ci-ok
+    runs-on: ubuntu-24.04
+    steps:
+      - name: No app or CI changes in this PR
+        run: |
+          echo "Docs-only change - the CI gate reports success without running the suite."

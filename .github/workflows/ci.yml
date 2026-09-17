@@ -36,6 +36,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: false
+      - name: Allow Go toolchain auto-switch
+        run: echo "GOTOOLCHAIN=auto" >> "$GITHUB_ENV"
       - name: Record the toolchain that actually runs
         run: |
           go version
@@ -62,6 +64,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: false
+      - name: Allow Go toolchain auto-switch
+        run: echo "GOTOOLCHAIN=auto" >> "$GITHUB_ENV"
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |

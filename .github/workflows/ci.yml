@@ -21,6 +21,7 @@ defaults:
 
 env:
   GOFLAGS: -buildvcs=false
+  GOTOOLCHAIN: auto
 
 jobs:
   vet:

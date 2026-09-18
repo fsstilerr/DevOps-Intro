@@ -1,0 +1,12 @@
+04:25:58.001737 IP 127.0.0.1.50378 > 127.0.0.1.8080: Flags [S], seq 2276713228, win 65535, options [mss 16344,nop,wscale 6,nop,nop,TS val 1920058372 ecr 0,sackOK,eol], length 0
+04:25:58.001810 IP 127.0.0.1.8080 > 127.0.0.1.50378: Flags [S.], seq 385229105, ack 2276713229, win 65535, options [mss 16344,nop,wscale 6,nop,nop,TS val 361473013 ecr 1920058372,sackOK,eol], length 0
+04:25:58.001834 IP 127.0.0.1.50378 > 127.0.0.1.8080: Flags [.], ack 1, win 6380, options [nop,nop,TS val 1920058372 ecr 361473013], length 0
+04:25:58.001853 IP 127.0.0.1.8080 > 127.0.0.1.50378: Flags [.], ack 1, win 6380, options [nop,nop,TS val 361473013 ecr 1920058372], length 0
+04:25:58.001866 IP 127.0.0.1.50378 > 127.0.0.1.8080: Flags [P.], seq 1:175, ack 1, win 6380, options [nop,nop,TS val 1920058372 ecr 361473013], length 174: HTTP: POST /notes HTTP/1.1
+04:25:58.001899 IP 127.0.0.1.8080 > 127.0.0.1.50378: Flags [.], ack 175, win 6378, options [nop,nop,TS val 361473013 ecr 1920058372], length 0
+04:25:58.009534 IP 127.0.0.1.8080 > 127.0.0.1.50378: Flags [P.], seq 1:204, ack 175, win 6378, options [nop,nop,TS val 361473021 ecr 1920058372], length 203: HTTP: HTTP/1.1 201 Created
+04:25:58.009587 IP 127.0.0.1.50378 > 127.0.0.1.8080: Flags [.], ack 204, win 6377, options [nop,nop,TS val 1920058380 ecr 361473021], length 0
+04:25:58.009650 IP 127.0.0.1.50378 > 127.0.0.1.8080: Flags [F.], seq 175, ack 204, win 6377, options [nop,nop,TS val 1920058380 ecr 361473021], length 0
+04:25:58.009686 IP 127.0.0.1.8080 > 127.0.0.1.50378: Flags [.], ack 176, win 6378, options [nop,nop,TS val 361473021 ecr 1920058380], length 0
+04:25:58.009700 IP 127.0.0.1.8080 > 127.0.0.1.50378: Flags [F.], seq 204, ack 176, win 6378, options [nop,nop,TS val 361473021 ecr 1920058380], length 0
+04:25:58.009730 IP 127.0.0.1.50378 > 127.0.0.1.8080: Flags [.], ack 205, win 6377, options [nop,nop,TS val 1920058380 ecr 361473021], length 0

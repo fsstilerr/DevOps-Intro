@@ -1,0 +1,31 @@
+### 1. Процессы QuickNotes
+  501  7753  7747   0  4:20AM ttys001    0:00.02 /var/folders/cy/mcmfk_h940vd_pxcz3yqk4h00000gn/T/go-build3740140201/b001/exe/quicknotes
+
+### 2. Кто слушает порт 8080
+COMMAND    PID             USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+quicknote 7753 sophiyasultanova    5u  IPv6 0x192e66721a9b94e5      0t0  TCP *:8080 (LISTEN)
+
+### 3. Что отвечает /health
+HTTP 200
+{"notes":9,"status":"ok"}
+
+
+### 4. Firewall rules
+No ALTQ support in kernel
+ALTQ related functions disabled
+scrub-anchor "com.apple/*" all fragment reassemble
+anchor "com.apple/*" all
+
+### 5. Resolver / localhost
+127.0.0.1
+name: localhost
+ipv6_address: ::1
+
+name: localhost
+ip_address: 127.0.0.1
+
+
+### Broken deploy log
+2026/09/18 04:31:09 quicknotes listening on :8080 (notes loaded: 9)
+2026/09/18 04:31:09 listen: listen tcp :8080: bind: address already in use
+exit status 1

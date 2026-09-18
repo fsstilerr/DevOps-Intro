@@ -1,0 +1,41 @@
+### 1. Что слушает 8080
+COMMAND    PID             USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+quicknote 7753 sophiyasultanova    5u  IPv6 0x192e66721a9b94e5      0t0  TCP *:8080 (LISTEN)
+
+### 2. Маршруты
+Routing tables
+
+Internet:
+Destination        Gateway            Flags               Netif Expire
+default            10.240.16.1        UGScg                 en0       
+10.240.16/21       link#11            UCS                   en0      !
+10.240.16.1/32     link#11            UCS                   en0      !
+10.240.16.1        18:9c:5d:5f:73:40  UHLWIir               en0   1134
+10.240.16.6        link#11            UHLWI                 en0      !
+10.240.16.43       e2:52:a4:8:df:44   UHLWI                 en0   1016
+10.240.16.65       66:61:d1:26:23:a3  UHLWI                 en0    262
+10.240.16.77       ea:62:b2:21:ec:fc  UHLWI                 en0    675
+10.240.16.83       86:7f:c9:c3:d6:57  UHLWI                 en0    663
+10.240.16.115      d2:2d:5e:8a:b1:48  UHLWI                 en0   1134
+10.240.16.123      86:76:38:78:27:18  UHLWI                 en0   1137
+   route to: default
+destination: default
+       mask: default
+    gateway: 10.240.16.1
+  interface: en0
+      flags: <UP,GATEWAY,DONE,STATIC,PRCLONING,GLOBAL>
+ recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
+       0         0         0         0         0         0      1500         0 
+
+### 3. Достижимость
+Start: 2026-09-18T04:28:03+0300
+HOST: MacBook-Pro-Sophiya-2.local Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- localhost                    0.0%     5    1.0   1.0   0.9   1.2   0.1
+
+### 4. DNS
+8.47.69.0
+8.6.112.0
+
+### 5. Логи процесса
+Timestamp                       Thread     Type        Activity             PID    TTL  
+2026-09-18 04:20:30.267265+0300 0x5f45bc   Activity    0x4050220            7753   0    quicknotes: (libsystem_info.dylib) Retrieve User by ID

@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, feature/lab3]
+    branches: [main]
     paths:
       - 'app/**'
       - '.github/workflows/ci.yml'
   pull_request:
-    branches: [main, feature/lab3]
+    branches: [main]
     paths:
       - 'app/**'
       - '.github/workflows/ci.yml'

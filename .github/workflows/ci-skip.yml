@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, feature/lab3]
+    branches: [main]
     paths-ignore:
       - 'app/**'
       - '.github/workflows/ci.yml'

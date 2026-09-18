@@ -74,7 +74,7 @@ jobs:
           key: gotest-${{ matrix.go }}-${{ runner.os }}-${{ hashFiles('app/go.mod', 'app/**/*.go') }}
           restore-keys: |
             gotest-${{ matrix.go }}-${{ runner.os }}-
-      - run: go test -race -count=1 ./...
+      - run: go test ${{ matrix.go == '1.24' && '-race' || '' }} -count=1 ./...
 
   lint:
     runs-on: ubuntu-24.04

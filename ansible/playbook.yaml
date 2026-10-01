@@ -9,7 +9,7 @@
     data_dir: "/var/lib/quicknotes"
     data_path: "/var/lib/quicknotes/notes.json"
     seed_path: "/var/lib/quicknotes/seed.json"
-    restart_backoff: "3s"
+    restart_backoff: "4s"
 
     ansible_pull_repo: "https://github.com/fsstilerr/DevOps-Intro.git"
     ansible_pull_branch: "feature/lab7"

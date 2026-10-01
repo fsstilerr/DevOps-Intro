@@ -70,7 +70,7 @@
     - name: Install Ansible and Git inside VM
       ansible.builtin.apt:
         name:
-          - ansible
+          - ansible-core
           - git
         state: present
         update_cache: true

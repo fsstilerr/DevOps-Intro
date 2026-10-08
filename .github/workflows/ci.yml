@@ -107,7 +107,7 @@ jobs:
         run: "$(go env GOPATH)/bin/govulncheck" ./...
 
   ci-ok:
-    if: always()
+    if: ${{ always() }}
     needs: [vet, test, lint, govulncheck]
     runs-on: ubuntu-24.04
     steps:

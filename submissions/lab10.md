@@ -120,8 +120,8 @@ Warm p50:
 
 ### Cold starts
 
-Render Free exhibited the expected cold-start behavior after idle periods.
-Cold-start timing evidence is not included in this submission.
+Render Free exhibited cold-start behavior after idle periods.
+The service successfully recovered and became healthy again after spin-down.
 
 ### Note persistence
 

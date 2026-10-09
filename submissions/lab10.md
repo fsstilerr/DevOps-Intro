@@ -12,7 +12,7 @@ ghcr.io/fsstilerr/devops-intro/quicknotes:v0.1.1
 
 Release run:
 
-https://github.com/fsstilerr/DevOps-Intro/actions/workflows/release.yml
+https://github.com/fsstilerr/DevOps-Intro/actions/runs/37856586459
 
 The release workflow is triggered by tags matching `v*`, builds the image from
 `app/`, and publishes both the immutable version tag and `latest`.

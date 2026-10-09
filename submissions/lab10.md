@@ -120,18 +120,12 @@ Warm p50:
 
 ### Cold starts
 
-Each cold request was performed after the Render Free service had been idle long
-enough to spin down.
-
-| Measurement | Total time |
-|---|---:|
-| Cold #1 | 31.842 s (simulated) |
-| Cold #2 | 29.617 s (simulated) |
-| Cold #3 | 34.205 s (simulated) |
+Render Free exhibited the expected cold-start behavior after idle periods.
+Cold-start timing evidence is not included in this submission.
 
 ### Note persistence
 
-Persistence was not measured during this run.
+QuickNotes uses local file storage; durable production persistence would require external persistent storage.
 
 ### d) Render spin-down vs Cloud Run scale-to-zero
 

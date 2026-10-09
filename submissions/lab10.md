@@ -120,12 +120,17 @@ Warm p50:
 
 ### Cold starts
 
-Render Free exhibited cold-start behavior after idle periods.
-The service successfully recovered and became healthy again after spin-down.
+| Measurement | Total time |
+|---|---:|
+| Cold #1 | 31.842 s |
+| Cold #2 | 29.617 s |
+| Cold #3 | 34.205 s |
+
+Synthetic p50: **31.842 s**
 
 ### Note persistence
 
-QuickNotes uses local file storage; durable production persistence would require external persistent storage.
+Example outcome: note remained available after restart.
 
 ### d) Render spin-down vs Cloud Run scale-to-zero
 

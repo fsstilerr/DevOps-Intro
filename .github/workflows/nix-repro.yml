@@ -20,9 +20,6 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa
 
-      - name: Deliberately introduce divergence
-        run: sed -i 's/tag = "latest";/tag = "broken";/' flake.nix
-
       - name: Build OCI image
         run: nix build .#docker
 

@@ -6,56 +6,152 @@ Branch: `feature/lab11`
 
 ---
 
-## Task 1 — Reproducible Go Build with Nix
+## Task 1 — Reproducible Go Build via Nix Flake
 
-Root files:
+The root `flake.nix` builds the existing QuickNotes application from `app/` with `buildGoModule`.
 
-- `flake.nix`
-- `flake.lock`
-
-QuickNotes is built from the existing `app/` directory with `buildGoModule`.
-
-Build settings:
+### Flake
 
 ```nix
-vendorHash = null;
-env.CGO_ENABLED = 0;
+{
+  description = "Reproducible QuickNotes build";
 
-ldflags = [
-  "-s"
-  "-w"
-];
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+  };
+
+  outputs = { self, nixpkgs }:
+    let
+      systems = [
+        "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ];
+
+      forAllSystems = f:
+        nixpkgs.lib.genAttrs systems (system: f system);
+    in
+    {
+      packages = forAllSystems (system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+
+          quicknotes = pkgs.buildGoModule {
+            pname = "quicknotes";
+            version = "0.1.0";
+
+            src = ./app;
+
+            vendorHash = null;
+
+            env.CGO_ENABLED = 0;
+
+            ldflags = [
+              "-s"
+              "-w"
+            ];
+          };
+
+          rootfs = pkgs.runCommand "quicknotes-rootfs" { } ''
+            mkdir -p $out/bin $out/etc $out/tmp
+            cp ${quicknotes}/bin/quicknotes $out/bin/quicknotes
+
+            cat > $out/etc/passwd <<PASSWD
+nonroot:x:65532:65532:nonroot:/tmp:/sbin/nologin
+PASSWD
+
+            cat > $out/etc/group <<GROUP
+nonroot:x:65532:
+GROUP
+
+            chmod 1777 $out/tmp
+          '';
+
+          dockerImage = pkgs.dockerTools.buildImage {
+            name = "quicknotes-nix";
+            tag = "latest";
+
+            copyToRoot = rootfs;
+
+            config = {
+              Entrypoint = [ "/bin/quicknotes" ];
+              ExposedPorts = {
+                "8080/tcp" = { };
+              };
+              User = "nonroot:nonroot";
+              WorkingDir = "/tmp";
+              Env = [
+                "ADDR=:8080"
+                "DATA_PATH=/tmp/notes.json"
+                "SEED_PATH=/tmp/seed.json"
+              ];
+            };
+          };
+        in
+        {
+          inherit quicknotes;
+          default = quicknotes;
+        }
+        // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+          docker = dockerImage;
+        });
+
+      devShells = forAllSystems (system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              go
+              gopls
+              golangci-lint
+            ];
+          };
+        });
+    };
+}
 ```
 
-`vendorHash = null` is used because QuickNotes currently has no external Go module dependencies. During the first build Nix reported:
+`flake.lock` is committed at the repository root and pins the resolved nixpkgs revision.
+
+QuickNotes has no external Go module dependencies. The initial build reported:
 
 ```text
 go: no dependencies to vendor
 vendor folder is empty, please set 'vendorHash = null;' in your expression
 ```
 
-The flake also provides a development shell with:
+Therefore the final flake uses:
 
-```text
-go
-gopls
-golangci-lint
+```nix
+vendorHash = null;
 ```
 
-### Runtime check
+### Build and runtime check
 
 ```bash
+nix build .#quicknotes
+```
+
+Resulting binary:
+
+```text
+-r-xr-xr-x 1 root wheel 5626768 Jan 1 1970 quicknotes
+```
+
+Runtime evidence (`docs/evidence/lab11/health.txt`):
+
+```text
 ADDR=:18082 ./result/bin/quicknotes
 curl http://localhost:18082/health
 ```
-
-Result (`docs/evidence/lab11/health.txt`):
 
 ```json
 {"notes":0,"status":"ok"}
 ```
 
-### Reproducibility proof
+### Two-environment reproducibility proof
 
 First build (`docs/evidence/lab11/store-hash-1.txt`):
 
@@ -69,34 +165,39 @@ Second build from a fresh clone after deleting the first output from the Nix sto
 sha256:1d6785h3y6g46qkdsf9c5147in5b2nhr815s8f5qh4kyxnq2iyqc
 ```
 
-The store hashes are identical.
+The hashes are identical.
 
 ### Design questions
 
-#### a) Why can plain `go build` differ between machines?
-The Git commit does not fully describe the build environment. Different Go versions, dependency state, build paths, VCS metadata and environment settings can affect the result. Nix pins the build inputs and toolchain.
+#### a) Why can `go build` differ between machines?
+A Git SHA pins source code, but not the complete build environment. Go version, dependency resolution, build IDs, paths, VCS metadata and environment values may differ. Nix makes these inputs explicit and pins the toolchain.
 
 #### b) What does `vendorHash` represent?
-It fixes the dependency set used by `buildGoModule`. If dependencies change, the expected hash changes and Nix refuses the build until the new dependency closure is explicitly accepted. QuickNotes currently has no third-party modules, so `vendorHash = null`.
+For `buildGoModule`, `vendorHash` fixes the fetched Go dependency closure. If dependencies change, the hash changes and the build fails until the expected value is updated. QuickNotes has no external dependencies, so the vendor tree is empty and `vendorHash = null` is required.
 
 #### c) Why is `flake.lock` important?
-It pins the exact resolved Nix inputs, including the nixpkgs revision. Without it, the same `flake.nix` can resolve to newer packages and a different build environment.
+It pins the exact resolved Nix inputs, including the nixpkgs revision. Without it, the same `flake.nix` may resolve to newer packages and a different Go toolchain, so reproducibility is no longer guaranteed.
 
 #### d) `buildGoModule` vs `buildGoApplication`
-`buildGoModule` works directly with the normal Go module layout and fixed dependency hashing. `buildGoApplication` is commonly used with a separately generated dependency description such as gomod2nix. `buildGoModule` is simpler for QuickNotes.
+`buildGoModule` works directly with a standard Go module and fixed dependency hashing. `buildGoApplication` is commonly paired with a separately generated dependency description such as gomod2nix. QuickNotes already has a normal Go module layout, so `buildGoModule` is the simpler fit.
 
 ---
 
 ## Task 2 — Deterministic OCI Image
 
-The OCI image is built with `pkgs.dockerTools.buildImage`, not `docker build`.
+The same flake exposes `.#docker` using `pkgs.dockerTools.buildImage`.
 
 Image configuration:
 
-- entrypoint: `/bin/quicknotes`
-- exposed port: `8080/tcp`
-- user: `nonroot:nonroot`
-- application address: `:8080`
+```text
+Entrypoint: /bin/quicknotes
+ExposedPorts: 8080/tcp
+User: nonroot:nonroot
+WorkingDir: /tmp
+ADDR=:8080
+```
+
+The image is produced by Nix, not by `docker build`.
 
 Runtime evidence:
 
@@ -104,15 +205,15 @@ Runtime evidence:
 - `docs/evidence/lab11/oci-health.txt`
 - `docs/evidence/lab11/oci-config.txt`
 
-### Nix OCI reproducibility
+### Two independent OCI builds
 
-First OCI build (`docs/evidence/lab11/oci-sha256-1.txt`):
+First OCI tarball (`docs/evidence/lab11/oci-sha256-1.txt`):
 
 ```text
 1ba3c65e4db8a4a7ed39e667cfa561608cb562e69988502571f1069c54f899c4
 ```
 
-Second independent OCI build (`docs/evidence/lab11/oci-sha256-2.txt`):
+Second independent OCI tarball (`docs/evidence/lab11/oci-sha256-2.txt`):
 
 ```text
 1ba3c65e4db8a4a7ed39e667cfa561608cb562e69988502571f1069c54f899c4
@@ -121,12 +222,14 @@ Second independent OCI build (`docs/evidence/lab11/oci-sha256-2.txt`):
 Comparison (`docs/evidence/lab11/oci-digest-compare.txt`):
 
 ```text
+FIRST:  1ba3c65e4db8a4a7ed39e667cfa561608cb562e69988502571f1069c54f899c4
+SECOND: 1ba3c65e4db8a4a7ed39e667cfa561608cb562e69988502571f1069c54f899c4
 MATCH: YES
 ```
 
 The two independently produced OCI tarballs are byte-identical.
 
-### Comparison with normal Docker build
+### Comparison with the Lab 6 Dockerfile build
 
 Two fresh `docker build --no-cache` runs produced different image IDs.
 
@@ -158,77 +261,150 @@ Evidence:
 - `docs/evidence/lab11/docker-run2-info.txt`
 - `docs/evidence/lab11/nix-image-info.txt`
 
-The regular Docker builds produced different IDs, while the two Nix OCI builds produced the same SHA-256.
+The regular Docker builds produced different IDs, while the independent Nix OCI builds produced the same tarball SHA-256.
 
 ### Design questions
 
-#### e) Why can normal Docker builds be non-reproducible?
-Docker image metadata can include build-time values such as timestamps. Base image tags, package repositories and downloaded dependencies may also change unless every input is pinned.
+#### e) Why can normal `docker build` be non-reproducible?
+Docker builds can embed build-time metadata such as timestamps. Base-image tags, package repositories and downloaded dependencies can also move unless every input is pinned.
 
 #### f) What does reproducibility add for a security auditor?
-A signature proves who signed an artifact. Reproducibility lets an auditor independently rebuild it from the reviewed source and compare the resulting digest, providing evidence that the distributed artifact corresponds to the declared build.
+A signature proves who signed a particular artifact, but not independently that the artifact corresponds exactly to the reviewed source. A reproducible build lets an auditor rebuild the artifact from the pinned source and inputs and compare digests.
 
 #### g) What is the trade-off?
-Nix adds another build language, toolchain, store and operational model. Dockerfiles are more familiar and broadly integrated, while Nix provides stronger control over build inputs and reproducibility.
+Nix adds another language, store, build model and toolchain for the team to learn and operate. Dockerfiles are more familiar and widely integrated, while Nix provides stronger control over build inputs and reproducibility.
 
 ---
 
 ## Bonus — CI-Verified Reproducibility
 
-Workflow:
+CI workflow: `.github/workflows/nix-repro.yml`
 
-```text
-.github/workflows/nix-repro.yml
+```yaml
+name: Nix Reproducibility
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-a:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa
+
+      - name: Build OCI image
+        run: nix build .#docker
+
+      - name: Compute digest
+        id: digest
+        run: |
+          DIGEST=$(sha256sum result | awk '{print $1}')
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Build A digest: $DIGEST"
+
+  build-b:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa
+
+      - name: Build OCI image
+        run: nix build .#docker
+
+      - name: Compute digest
+        id: digest
+        run: |
+          DIGEST=$(sha256sum result | awk '{print $1}')
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Build B digest: $DIGEST"
+
+  compare:
+    runs-on: ubuntu-latest
+    needs:
+      - build-a
+      - build-b
+
+    steps:
+      - name: Compare digests
+        env:
+          DIGEST_A: ${{ needs.build-a.outputs.digest }}
+          DIGEST_B: ${{ needs.build-b.outputs.digest }}
+        run: |
+          echo "Build A: $DIGEST_A"
+          echo "Build B: $DIGEST_B"
+
+          if [ "$DIGEST_A" != "$DIGEST_B" ]; then
+            echo "Reproducibility check FAILED"
+            exit 1
+          fi
+
+          echo "Reproducibility check PASSED"
 ```
 
-The workflow uses two parallel fresh GitHub-hosted runners:
-
-- `build-a`
-- `build-b`
-
-Each runner independently builds `.#docker` and calculates the OCI tarball SHA-256. A third `compare` job fails when the digests differ.
+The checkout and Nix installer actions are pinned by full commit SHA.
 
 ### Red → green proof
 
-Deliberately broken run:
+**Deliberately broken run**
 
 https://github.com/fsstilerr/DevOps-Intro/actions/runs/38654077396
+
+The two build jobs completed, but the third comparison job detected the deliberately introduced divergence and failed:
 
 ```text
 build-a   PASS
 build-b   PASS
 compare   FAIL
+Process completed with exit code 1
 ```
 
-A temporary divergence was introduced only in one build. The comparison job detected the mismatch and exited with code 1.
-
-After removing the temporary divergence:
+**Fixed green run**
 
 https://github.com/fsstilerr/DevOps-Intro/actions/runs/38654244688
+
+Both fresh runners completed successfully and the comparison gate passed:
 
 ```text
 build-a   PASS
 build-b   PASS
 compare   PASS
+Reproducibility check PASSED
 ```
 
-The fixed workflow successfully verified matching builds on two independent runners.
+The workflow passes only when `DIGEST_A == DIGEST_B`; the successful `compare` job is the CI assertion that both independently produced digests matched.
 
 ### Design questions
 
 #### h) Why is CI reproducibility stronger than “reproducible on my laptop”?
-Two local builds can share the same Nix store, cache and machine state. Separate CI runners reconstruct the artifact in independent fresh environments, giving stronger evidence that the result depends only on declared inputs.
+Two local builds can share the same Nix store, caches and host state. Separate GitHub-hosted runners reconstruct the artifact independently, so matching results are stronger evidence that the output is determined by the declared inputs rather than local machine state.
 
-#### i) Why two parallel jobs?
-Two builds in one job share the same runner and Nix store, so the second build may simply reuse the first result. Separate jobs force independent reconstruction before comparison.
+#### i) Why two parallel jobs instead of building twice in one job?
+Two builds in one job share the same runner and Nix store, so the second build may simply reuse the first result. Parallel jobs use independent fresh runners and therefore provide a stronger reproducibility test.
 
-#### j) Where can timestamps leak into an OCI image?
-Creation timestamps and layer/config metadata can make otherwise identical image archives differ. Deterministic image metadata avoids embedding the current wall-clock time and allows identical OCI tarballs to be reproduced.
+#### j) Where can timestamps leak, and how does `dockerTools.buildImage` handle them?
+OCI image configuration and layer metadata can contain creation timestamps. Embedding the current wall-clock time makes otherwise identical archives differ. `dockerTools.buildImage` uses deterministic image construction rather than relying on the current build time, which allows independently generated image tarballs to match.
 
 ---
 
 ## Result
 
-- Task 1: completed — reproducible Nix Go build, identical store hashes and runtime check
-- Task 2: completed — deterministic OCI image, identical SHA-256 across independent builds and Docker comparison
-- Bonus: completed — parallel CI reproducibility gate with RED → GREEN proof
+- Task 1: completed — `flake.nix`, `flake.lock`, runtime proof and identical store hashes
+- Task 2: completed — loadable deterministic OCI image, identical independent SHA-256 values and Docker comparison
+- Bonus: completed — two-parallel-job CI gate with deliberate RED → GREEN proof

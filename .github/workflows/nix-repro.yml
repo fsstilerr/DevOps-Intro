@@ -1,0 +1,78 @@
+name: Nix Reproducibility
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-a:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa
+
+      - name: Deliberately introduce divergence
+        run: sed -i 's/tag = "latest";/tag = "broken";/' flake.nix
+
+      - name: Build OCI image
+        run: nix build .#docker
+
+      - name: Compute digest
+        id: digest
+        run: |
+          DIGEST=$(sha256sum result | awk '{print $1}')
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Build A digest: $DIGEST"
+
+  build-b:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa
+
+      - name: Build OCI image
+        run: nix build .#docker
+
+      - name: Compute digest
+        id: digest
+        run: |
+          DIGEST=$(sha256sum result | awk '{print $1}')
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Build B digest: $DIGEST"
+
+  compare:
+    runs-on: ubuntu-latest
+    needs:
+      - build-a
+      - build-b
+
+    steps:
+      - name: Compare digests
+        env:
+          DIGEST_A: ${{ needs.build-a.outputs.digest }}
+          DIGEST_B: ${{ needs.build-b.outputs.digest }}
+        run: |
+          echo "Build A: $DIGEST_A"
+          echo "Build B: $DIGEST_B"
+
+          if [ "$DIGEST_A" != "$DIGEST_B" ]; then
+            echo "Reproducibility check FAILED"
+            exit 1
+          fi
+
+          echo "Reproducibility check PASSED"

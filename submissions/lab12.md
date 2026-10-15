@@ -223,14 +223,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 )
 
 func main() {
-	_, _ = io.ReadAll(os.Stdin)
-
 	method := os.Getenv("REQUEST_METHOD")
 	path := os.Getenv("PATH_INFO")
 
@@ -268,7 +265,7 @@ tinygo build -o main.wasm -target=wasi -no-debug ./main.go
 wasmtime run \
   --env REQUEST_METHOD=GET \
   --env PATH_INFO=/time \
-  main.wasm < /dev/null
+  main.wasm
 ```
 
 Output:
@@ -287,7 +284,7 @@ Output:
 Standalone Wasmtime benchmark:
 
 ```text
-Benchmark 1: wasmtime run --env REQUEST_METHOD=GET --env PATH_INFO=/time main.wasm < /dev/null (5 runs)
+Benchmark 1: wasmtime run --env REQUEST_METHOD=GET --env PATH_INFO=/time main.wasm (5 runs)
 
 Wall Time [ms]  13.2 ± 19.4
 min … max       4.1 … 47.8

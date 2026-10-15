@@ -214,7 +214,7 @@ A WASM guest cannot simply access host files, sockets or syscalls unless the hos
 
 ## Bonus — Two WASM Execution Models
 
-A second implementation was built in `wasm-cli/` without the Spin SDK. It reads the request context from `REQUEST_METHOD` and `PATH_INFO`, writes the Moscow-time JSON to stdout.
+A second implementation was built in `wasm-cli/` without the Spin SDK. It reads the request context from `REQUEST_METHOD` and `PATH_INFO` and writes the Moscow-time JSON to stdout.
 
 ### `wasm-cli/main.go`
 

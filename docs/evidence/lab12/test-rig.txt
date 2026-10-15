@@ -1,0 +1,6 @@
+Machine: arm64
+macOS: 26.6.2
+Spin: spin 3.6.3 (88d51cf 2026-04-09)
+Hyperfine: hyperfine 2.0.0
+CPU: Apple M3
+Memory: 8.0 GiB

@@ -1,0 +1,5 @@
+Benchmark 1: curl -fsS -o /dev/null http://127.0.0.1:3000/time (50 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      6.0 ms  ±     0.6 ms       5.3 ms  …     8.6 ms
+  Memory         4.8 MiB ±     0.0 MiB      4.8 MiB …     4.8 MiB
+ 

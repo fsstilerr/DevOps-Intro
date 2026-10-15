@@ -1,0 +1,5 @@
+Benchmark 1: curl -fsS -o /dev/null http://127.0.0.1:18084/health (50 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      6.3 ms  ±     0.9 ms       5.4 ms  …     9.7 ms
+  Memory         4.8 MiB ±     0.0 MiB      4.8 MiB …     4.8 MiB
+ 

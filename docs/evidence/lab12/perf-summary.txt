@@ -1,0 +1,19 @@
+Lab 12 performance results
+
+Artifact size
+Docker quicknotes:lab6: 5368449 bytes (5.12 MiB)
+Spin main.wasm:       367653 bytes (359.04 KiB)
+
+Cold start samples (seconds)
+Docker: 0.2676, 0.2085, 0.1740, 0.1464, 0.1717
+Spin:   0.0806, 0.0123, 0.0373, 0.0231, 0.0183
+
+Cold start p50
+Docker: 173.97 ms
+Spin:   23.13 ms
+
+Warm latency
+Docker p50: 6.018 ms
+Docker p95: 8.383 ms
+Spin p50:   5.835 ms
+Spin p95:   7.122 ms

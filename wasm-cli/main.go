@@ -2,14 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"time"
 )
 
 func main() {
-	_, _ = io.ReadAll(os.Stdin)
-
 	method := os.Getenv("REQUEST_METHOD")
 	path := os.Getenv("PATH_INFO")
 
